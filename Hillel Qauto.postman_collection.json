@@ -1,0 +1,1589 @@
+{
+	"info": {
+		"_postman_id": "515812e2-09c9-4ab3-9140-04dbdf83e16a",
+		"name": "Hillel Qauto",
+		"description": "Author: Kruhlov Vladyslav  \nEnv: need to import Prod / Dev (for changing environment use env switcher)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11412161"
+	},
+	"item": [
+		{
+			"name": "Positive tests",
+			"item": [
+				{
+					"name": "CreateUser",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"const requestBody = pm.request.body.raw;",
+									"",
+									"const Ajv = require('ajv');",
+									"const ajv = new Ajv();",
+									"",
+									"// Save user Id in collection variable",
+									"let userID = jsonData.data.userId;",
+									"pm.collectionVariables.set(\"UserId\", userID);",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 201\", function(){",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Check isValidEmail\", function () {",
+									"    const pattern =/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/;",
+									"    const jsonBody = JSON.parse(requestBody);",
+									"    pm.expect(jsonBody.email).to.be.a('string').and.to.match(pattern);",
+									"});",
+									"",
+									"const createUserJsonSchema = {",
+									"  \"type\": \"object\",",
+									"  \"properties\": {",
+									"    \"status\": {",
+									"      \"type\": \"string\"",
+									"    },",
+									"    \"data\": {",
+									"      \"type\": \"object\",",
+									"      \"properties\": {",
+									"        \"userId\": {",
+									"          \"type\": \"integer\"",
+									"        },",
+									"        \"photoFilename\": {",
+									"          \"type\": \"string\"",
+									"        },",
+									"        \"distanceUnits\": {",
+									"          \"type\": \"string\"",
+									"        },",
+									"        \"currency\": {",
+									"          \"type\": \"string\"",
+									"        }",
+									"      },",
+									"      \"required\": [",
+									"        \"userId\",",
+									"        \"photoFilename\",",
+									"        \"distanceUnits\",",
+									"        \"currency\"",
+									"      ]",
+									"    }",
+									"  },",
+									"  \"required\": [",
+									"    \"status\",",
+									"    \"data\"",
+									"  ]",
+									"}",
+									"",
+									"pm.test(\"Check Json schema\", function () {",
+									"    const validate = ajv.compile(createUserJsonSchema);",
+									"    const valid = validate(jsonData);",
+									"    pm.expect(valid, \"Json schema validate\").to.be.true;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"",
+									"const requestBody = JSON.parse(pm.request.body.raw);",
+									"",
+									"// Import function \"generatePasswordMaxLength()\"",
+									"const generatePasswordMaxLength = new Function('return ' + pm.collectionVariables.get(\"generatePasswordMaxLength\"))();",
+									"",
+									"// Save user firstName in colection variable",
+									"const firstName = pm.variables.replaceIn('{{$randomFirstName}}');",
+									"pm.collectionVariables.set(\"FirstName\", firstName);",
+									"",
+									"// Save user lastName in colection variable",
+									"const lastName = pm.variables.replaceIn('{{$randomLastName}}');",
+									"pm.collectionVariables.set(\"LastName\", lastName);",
+									"",
+									"// Save user email in colection variable",
+									"const randomNameForEmail = Math.random().toString(36).substring(2, 30);",
+									"const email = `${randomNameForEmail}@test.com`;",
+									"pm.collectionVariables.set(\"Email\", email);",
+									"",
+									"// Save user password in colection variable",
+									"const password = generatePasswordMaxLength();",
+									"pm.collectionVariables.set(\"Password\", password);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"{{FirstName}}\",\n  \"lastName\": \"{{LastName}}\",\n  \"email\": \"{{Email}}\",\n  \"password\": \"{{Password}}\",\n  \"repeatPassword\": \"{{Password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/auth/signup",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ResetPassword",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"const Ajv = require('ajv');",
+									"const ajv = new Ajv();",
+									"",
+									"// Change Password in collection variable",
+									"let userPassword = pm.variables.get(\"password\");",
+									"pm.collectionVariables.set(\"Password\", userPassword);",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 200\", function(){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check userId\", function(){",
+									"    pm.expect(jsonData.data.userId).to.eql(pm.collectionVariables.get(\"UserId\"));",
+									"});",
+									"",
+									"const changePasswordJsonSchema = {",
+									"  \"type\": \"object\",",
+									"  \"properties\": {",
+									"    \"status\": {",
+									"      \"type\": \"string\"",
+									"    },",
+									"    \"data\": {",
+									"      \"type\": \"object\",",
+									"      \"properties\": {",
+									"        \"userId\": {",
+									"          \"type\": \"integer\"",
+									"        }",
+									"      },",
+									"      \"required\": [",
+									"        \"userId\"",
+									"      ]",
+									"    }",
+									"  },",
+									"  \"required\": [",
+									"    \"status\",",
+									"    \"data\"",
+									"  ]",
+									"}",
+									"",
+									"pm.test(\"Check Json schema\", function () {",
+									"    const validate = ajv.compile(changePasswordJsonSchema);",
+									"    const valid = validate(jsonData);",
+									"    pm.expect(valid, \"Json schema validate\").to.be.true;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Import function \"generatePasswordMinLength()\"",
+									"const generatePasswordMinLength = new Function('return ' + pm.collectionVariables.get(\"generatePasswordMinLength\"))();",
+									"",
+									"// Create a new pass with min symbols",
+									"const password = generatePasswordMinLength();",
+									"pm.variables.set(\"password\", password);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oldPassword\": \"{{Password}}\",\n  \"password\": \"{{password}}\",\n  \"repeatPassword\": \"{{password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/users/password",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"users",
+								"password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ChangeUser",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 200\", function(){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check user FirstName\", function(){",
+									"    pm.expect(jsonData.data.name).to.eql(pm.collectionVariables.get(\"FirstName\"));",
+									"})",
+									"",
+									"pm.test(\"Check user LastName\", function(){",
+									"    pm.expect(jsonData.data.lastName).to.eql(pm.collectionVariables.get(\"LastName\"));",
+									"})",
+									"",
+									"pm.test(\"Check user DateBirth\", function(){",
+									"    pm.expect(jsonData.data.dateBirth).to.eql(pm.collectionVariables.get(\"DateBirth\"));",
+									"})",
+									"",
+									"pm.test(\"Check user Country\", function(){",
+									"    pm.expect(jsonData.data.country).to.eql(pm.collectionVariables.get(\"Country\"));",
+									"})",
+									"",
+									"pm.test(\"Check response contains correct types\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData.data).to.have.property(\"userId\").that.is.a(\"number\");",
+									"    pm.expect(jsonData.data).to.have.property(\"lastName\").that.is.a(\"string\");",
+									"    pm.expect(jsonData.data).to.have.property(\"name\").that.is.a(\"string\");",
+									"    pm.expect(jsonData.data).to.have.property(\"dateBirth\").that.is.a(\"string\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Import function \"generatePasswordMaxLength()\"",
+									"const generateRandomDateOfBirth = new Function('return ' + pm.collectionVariables.get(\"generateRandomDateOfBirth\"))();",
+									"",
+									"// Save changed user firstName in colection variable",
+									"const firstName = pm.variables.replaceIn('{{$randomFirstName}}');",
+									"pm.collectionVariables.set(\"FirstName\", firstName);",
+									"",
+									"// Save changed user lastName in colection variable",
+									"const lastName = pm.variables.replaceIn('{{$randomLastName}}');",
+									"pm.collectionVariables.set(\"LastName\", lastName);",
+									"",
+									"const dateBirth = generateRandomDateOfBirth();",
+									"pm.collectionVariables.set(\"DateBirth\", dateBirth);",
+									"",
+									"const country = pm.variables.replaceIn('{{$randomCountry}}');",
+									"pm.collectionVariables.set(\"Country\", country);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"photo\": \"user-1621352948859.jpg\",\n  \"name\": \"{{FirstName}}\",\n  \"lastName\": \"{{LastName}}\",\n  \"dateBirth\": \"{{DateBirth}}\",\n  \"country\": \"{{Country}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/users/profile",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"users",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 200\", function(){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check status\", function(){",
+									"    pm.expect(jsonData.status).to.eql(\"ok\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{BaseUrl}}/auth/logout",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 200\", function(){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check userId\", function(){",
+									"    pm.expect(jsonData.data.userId).to.eql(pm.collectionVariables.get(\"UserId\"));",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{Email}}\",\n  \"password\": \"{{Password}}\",\n  \"remember\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/auth/signin",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AddCar",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"// Save car Id in collection variable",
+									"let carID = jsonData.data.id;",
+									"carID = parseInt(carID, 10);",
+									"pm.collectionVariables.set(\"CarId\", carID);",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 201\", function(){",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Import function \"generateRandomCarId()\"",
+									"const generateRandomCarId = new Function('return ' + pm.collectionVariables.get(\"generateRandomCarId\"))();",
+									"",
+									"// Import function \"generateRandomCarIdModel()\"",
+									"const generateRandomCarIdModel = new Function('return ' + pm.collectionVariables.get(\"generateRandomCarIdModel\"))();",
+									"",
+									"// Import function \"generateMileage()\"",
+									"const generateMileage = new Function('return ' + pm.collectionVariables.get(\"generateMileage\"))();",
+									"",
+									"// Save car Brand Id in collection variable",
+									"const carBrandId = generateRandomCarId();",
+									"pm.collectionVariables.set(\"carBrandId\", carBrandId);",
+									"",
+									"// Save car Model Id in collection variable",
+									"const carModelId = generateRandomCarIdModel(carBrandId);",
+									"pm.collectionVariables.set(\"carModelId\", carModelId);",
+									"",
+									"// Save car Mileage in collection variable",
+									"const carMileage = generateMileage();",
+									"pm.collectionVariables.set(\"carMileage\", carMileage);",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"carBrandId\": {{carBrandId}},\n  \"carModelId\": {{carModelId}},\n  \"mileage\": {{carMileage}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/cars",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"cars"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CreateExpenses",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Import function \"getCurrentDate()\"",
+									"const getCurrentDate = new Function('return ' + pm.collectionVariables.get(\"getCurrentDate\"))();",
+									"",
+									"// Save ReportedAt in collectionVariables",
+									"const reportedAt = getCurrentDate();",
+									"pm.collectionVariables.set(\"ReportedAt\", reportedAt);",
+									"",
+									"// Save Mileage in collectionVariables",
+									"let mileage = pm.collectionVariables.get(\"carMileage\")+1;",
+									"mileage = parseInt(mileage, 10);",
+									"pm.variables.set(\"expensesMileage\", mileage);",
+									"",
+									"// Save Liters in collectionVariables",
+									"let liters = pm.variables.replaceIn('{{$randomInt}}');",
+									"liters = parseInt(liters, 10);",
+									"pm.collectionVariables.set(\"Liters\", liters);",
+									"",
+									"// Save totalCost in collectionVariables",
+									"let randomTotalCost = pm.variables.replaceIn('{{$randomInt}}');",
+									"randomTotalCost = parseInt(randomTotalCost, 10);",
+									"pm.collectionVariables.set(\"TotalCost\", randomTotalCost);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"// Change base mileage in collection variable",
+									"let mileage = pm.variables.get(\"expensesMileage\");",
+									"pm.collectionVariables.set(\"carMileage\", mileage);",
+									"",
+									"// Check CarId is not empty",
+									"pm.test(\"Body matches string\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"id\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"carId\": {{CarId}},\n  \"reportedAt\": \"{{ReportedAt}}\",\n  \"mileage\": {{expensesMileage}},\n  \"liters\": {{Liters}},\n  \"totalCost\": {{TotalCost}},\n  \"forceMileage\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/expenses",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"expenses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteUser",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Check status code is 200\", function(){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.collectionVariables.set(\"UserId\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"FirstName\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"LastName\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"Email\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"Password\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"DateBirth\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"Country\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"CarId\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"carBrandId\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"carModelId\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"carMileage\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"ReportedAt\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"Liters\", \"\");",
+									"",
+									"pm.collectionVariables.set(\"TotalCost\", \"\");",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/users",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Navigation for API tests:\n\n- User tests (CreateUser, ResetPassword, ChangeUser, Logout, Login, DeleteUser);\n    \n- Car tests (AddCar, CreateExpenses);\n    \n\nReq: Use \"DeleteUser\" for delete all test results from DB and for clearing Collection variables that created in the current test session if you work with Positive tests manualy;",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Localization tests",
+			"item": [
+				{
+					"name": "CreateUser",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 400\", function(){",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Check error message in EN\", function () {",
+									"    pm.request.headers.add({key: \"Accept-Language\", value: \"en\"});",
+									"    pm.expect(jsonData).to.have.property(\"message\").that.includes(\"Name is invalid\");",
+									"});",
+									"",
+									"pm.test(\"Check error message in UK\", function () {",
+									"    pm.request.headers.add({key: \"Accept-Language\", value: \"uk\"});",
+									"    pm.expect(jsonData).to.have.property(\"message\").that.includes(\"Неправильне імʼя\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"",
+									"const requestBody = JSON.parse(pm.request.body.raw);",
+									"",
+									"// Import function \"generatePasswordMaxLength()\"",
+									"const generatePasswordMaxLength = new Function('return ' + pm.collectionVariables.get(\"generatePasswordMaxLength\"))();",
+									"",
+									"// Save user firstName in colection variable",
+									"const firstName = pm.variables.replaceIn('{{$randomFirstName}}');",
+									"pm.collectionVariables.set(\"FirstName\", firstName);",
+									"",
+									"// Save user lastName in colection variable",
+									"const lastName = pm.variables.replaceIn('{{$randomLastName}}');",
+									"pm.collectionVariables.set(\"LastName\", lastName);",
+									"",
+									"// Save user password in colection variable",
+									"const password = generatePasswordMaxLength();",
+									"pm.collectionVariables.set(\"Password\", password);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"{{}}\",\n  \"lastName\": \"{{LastName}}\",\n  \"email\": \"{{Email}}\",\n  \"password\": \"{{Password}}\",\n  \"repeatPassword\": \"{{Password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/auth/signup",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetUserProfile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Check error message in EN\", function () {",
+									"    pm.request.headers.add({key: \"Accept-Language\", value: \"en\"});",
+									"    pm.expect(jsonData).to.have.property(\"message\").that.includes(\"Not authenticated\");",
+									"});",
+									"",
+									"pm.test(\"Check error message in UK\", function () {",
+									"    pm.request.headers.add({key: \"Accept-Language\", value: \"uk\"});",
+									"    pm.expect(jsonData).to.have.property(\"message\").that.includes(\"Неавторизований користувач\");",
+									"});",
+									"",
+									"pm.test(\"Check error message in RU\", function () {",
+									"    pm.request.headers.add({key: \"Accept-Language\", value: \"ru\"});",
+									"    pm.expect(jsonData).to.have.property(\"message\").that.includes(\"Нет авторизации\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{BaseUrl}}/users/profile",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"users",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Check error message in responce for for different languages:  \n\\- GetUserProfile (Not Auth)\n\n\\- CreateUser (Invalid name)"
+		},
+		{
+			"name": "[Field validation] Negative tests with different data",
+			"item": [
+				{
+					"name": "LastNameNegativeTestsWithArrayData",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const requestBody = JSON.parse(pm.request.body.raw);",
+									"",
+									"// Import function \"generatePasswordMaxLength()\"",
+									"const generatePasswordMaxLength = new Function('return ' + pm.collectionVariables.get(\"generatePasswordMaxLength\"))();",
+									"",
+									"// Save user firstName in colection variable",
+									"const firstName = pm.variables.replaceIn('{{$randomFirstName}}');",
+									"pm.collectionVariables.set(\"FirstName\", firstName);",
+									"",
+									"// Save user email in colection variable",
+									"const randomNameForEmail = Math.random().toString(36).substring(2, 30);",
+									"const email = `${randomNameForEmail}@test.com`;",
+									"pm.collectionVariables.set(\"Email\", email);",
+									"",
+									"// Save user password in colection variable",
+									"const password = generatePasswordMaxLength();",
+									"pm.collectionVariables.set(\"Password\", password);",
+									"",
+									"const testCases = [{",
+									"    name: \"Empty field\",",
+									"    data: \"\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"\\\"lastName\\\" is not allowed to be empty\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Spaces only\",",
+									"    data: \"  \",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"\\\"lastName\\\" is not allowed to be empty\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Number in the name\",",
+									"    data: \"Kruhlov94\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Last Name is invalid\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"More than 20 char\",",
+									"    data: \"KruhlovVladyslavNordWind\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Last Name has to be from 2 to 20 characters long\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Less than 2 char\",",
+									"    data: \"K\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Last Name has to be from 2 to 20 characters long\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Special symbols\",",
+									"    data: \"Kruhlov@Vlad\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Last Name is invalid\"",
+									"        }",
+									"    }",
+									"]",
+									"",
+									"const maxIterations = testCases.length-1;",
+									"",
+									"// Index of iteration",
+									"let currentIteration = pm.variables.get(\"currentIteration\") || 0;",
+									"currentIteration = parseInt(currentIteration, 10);",
+									"",
+									"// Data fo iteration",
+									"const testCase = testCases[currentIteration];",
+									"pm.variables.set(\"lastName\", testCase.data);",
+									"",
+									"// Test data for current iteration",
+									"pm.variables.set(\"expectedStatusCode\", testCase.expectedResult.expectedStatusCode);",
+									"pm.variables.set(\"expectedMessage\", testCase.expectedResult.expectedMessage);",
+									"",
+									"// Iteration ",
+									"if (currentIteration < maxIterations) {",
+									"    pm.variables.set(\"currentIteration\", currentIteration + 1);",
+									"    pm.execution.setNextRequest(pm.info.requestName)",
+									"} else {",
+									"    pm.variables.set(\"currentIteration\", 0);",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"const expectedStatusCode = pm.variables.get(\"expectedStatusCode\");",
+									"const expectedMessage = pm.variables.get(\"expectedMessage\");",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 400\", function(){",
+									"    pm.response.to.have.status(parseInt(expectedStatusCode, 10));",
+									"});",
+									"",
+									"pm.test(\"Check status\", function () {;",
+									"     pm.expect(jsonData.status).to.equals(\"error\");",
+									"});",
+									"",
+									"pm.test(\"Check message\", function () {;",
+									"     pm.expect(jsonData).to.have.property(\"message\", expectedMessage)",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"{{FirstName}}\",\n  \"lastName\": \"{{lastName}}\",\n  \"email\": \"{{Email}}\",\n  \"password\": \"{{Password}}\",\n  \"repeatPassword\": \"{{Password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/auth/signup",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LastNameEdgeTestsCasesWithArrayData",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const requestBody = JSON.parse(pm.request.body.raw);",
+									"",
+									"// Import function \"generatePasswordMaxLength()\"",
+									"const generatePasswordMaxLength = new Function('return ' + pm.collectionVariables.get(\"generatePasswordMaxLength\"))();",
+									"",
+									"// Save user firstName in colection variable",
+									"const firstName = pm.variables.replaceIn('{{$randomFirstName}}');",
+									"pm.collectionVariables.set(\"FirstName\", firstName);",
+									"",
+									"// Save user email in colection variable",
+									"const randomNameForEmail = Math.random().toString(36).substring(2, 30);",
+									"const email = `${randomNameForEmail}@test.com`;",
+									"pm.collectionVariables.set(\"Email\", email);",
+									"",
+									"// Save user password in colection variable",
+									"const password = generatePasswordMaxLength();",
+									"pm.collectionVariables.set(\"Password\", password);",
+									"",
+									"const testCases = [{",
+									"",
+									"    name: \"Name with ' ` '\",",
+									"    data: \"O`connel\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 201,",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Double surname\",",
+									"    data: \"Bennett-Burns\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 201,",
+									"        }",
+									"    }",
+									"]",
+									"",
+									"const maxIterations = testCases.length-1;",
+									"",
+									"// Index of iteration",
+									"let currentIteration = pm.variables.get(\"currentIteration\") || 0;",
+									"currentIteration = parseInt(currentIteration, 10);",
+									"",
+									"// Data fo iteration",
+									"const testCase = testCases[currentIteration];",
+									"pm.variables.set(\"lastName\", testCase.data);",
+									"",
+									"// Test data for current iteration",
+									"pm.variables.set(\"expectedStatusCode\", testCase.expectedResult.expectedStatusCode);",
+									"",
+									"// Iteration ",
+									"if (currentIteration < maxIterations) {",
+									"    pm.variables.set(\"currentIteration\", currentIteration + 1);",
+									"    pm.execution.setNextRequest(pm.info.requestName)",
+									"} else {",
+									"    pm.variables.set(\"currentIteration\", 0);",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"const expectedStatusCode = pm.variables.get(\"expectedStatusCode\");",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 201\", function(){",
+									"    jsonData.to.have.status(parseInt(expectedStatusCode, 10));",
+									"});",
+									"",
+									"pm.test(\"Resp doesnt contain error status\", function(){",
+									"    pm.expect(JSON.stringify(jsonData)).not.to.include(\"error\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"{{FirstName}}\",\n  \"lastName\": \"{{lastName}}\",\n  \"email\": \"{{Email}}\",\n  \"password\": \"{{Password}}\",\n  \"repeatPassword\": \"{{Password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/auth/signup",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "This test case use several iteration for different data:  \n\\- Incorrect Last name field;\n\n\\- Edge cases for Last name field;"
+		},
+		{
+			"name": "[Request errors] Negative tests with incorrect data",
+			"item": [
+				{
+					"name": "Login (email)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"const expectedStatusCode = pm.variables.get(\"expectedStatusCode\");",
+									"const expectedMessage = pm.variables.get(\"expectedMessage\");",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 400\", function(){",
+									"    pm.response.to.have.status(parseInt(expectedStatusCode, 10));",
+									"});",
+									"",
+									"pm.test(\"Check status\", function () {;",
+									"     pm.expect(jsonData.status).to.equals(\"error\");",
+									"});",
+									"",
+									"pm.test(\"Check message\", function () {;",
+									"     pm.expect(jsonData).to.have.property(\"message\", expectedMessage)",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const requestBody = JSON.parse(pm.request.body.raw);",
+									"",
+									"const testCases = [{",
+									"    name: \"Empty email\",",
+									"    data: \"\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"\\\"email\\\" is not allowed to be empty\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Invalid email\",",
+									"    data: \"{{}}\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Email is invalid\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Incorrect email\",",
+									"    data: \"Kruhlov94@gmail.com\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Wrong email or password\"",
+									"        }",
+									"    }",
+									"]",
+									"",
+									"const maxIterations = testCases.length-1;",
+									"",
+									"// Index of iteration",
+									"let currentIteration = pm.variables.get(\"currentIteration\") || 0;",
+									"currentIteration = parseInt(currentIteration, 10);",
+									"",
+									"// Data fo iteration",
+									"const testCase = testCases[currentIteration];",
+									"pm.variables.set(\"email\", testCase.data);",
+									"",
+									"// Test data for current iteration",
+									"pm.variables.set(\"expectedStatusCode\", testCase.expectedResult.expectedStatusCode);",
+									"pm.variables.set(\"expectedMessage\", testCase.expectedResult.expectedMessage);",
+									"",
+									"// Iteration ",
+									"if (currentIteration < maxIterations) {",
+									"    pm.variables.set(\"currentIteration\", currentIteration + 1);",
+									"    pm.execution.setNextRequest(pm.info.requestName)",
+									"} else {",
+									"    pm.variables.set(\"currentIteration\", 0);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{Password}}\",\n  \"remember\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/auth/signin",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login (password)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"const expectedStatusCode = pm.variables.get(\"expectedStatusCode\");",
+									"const expectedMessage = pm.variables.get(\"expectedMessage\");",
+									"",
+									"// Tests",
+									"pm.test(\"Check status code is 400\", function(){",
+									"    pm.response.to.have.status(parseInt(expectedStatusCode, 10));",
+									"});",
+									"",
+									"pm.test(\"Check status\", function () {;",
+									"     pm.expect(jsonData.status).to.equals(\"error\");",
+									"});",
+									"",
+									"pm.test(\"Check message\", function () {;",
+									"     pm.expect(jsonData).to.have.property(\"message\", expectedMessage)",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const requestBody = JSON.parse(pm.request.body.raw);",
+									"",
+									"const testCases = [{",
+									"    name: \"Empty password\",",
+									"    data: \"\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"\\\"password\\\" is not allowed to be empty\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Invalid password\",",
+									"    data: \"{{}}\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Wrong email or password\"",
+									"        }",
+									"    },",
+									"        {",
+									"    name: \"Incorrect password\",",
+									"    data: \"Kruhlov94\",",
+									"    expectedResult: {",
+									"        expectedStatusCode: 400,",
+									"        expectedMessage: \"Wrong email or password\"",
+									"        }",
+									"    }",
+									"]",
+									"",
+									"const maxIterations = testCases.length-1;",
+									"",
+									"// Index of iteration",
+									"let currentIteration = pm.variables.get(\"currentIteration\") || 0;",
+									"currentIteration = parseInt(currentIteration, 10);",
+									"",
+									"// Data fo iteration",
+									"const testCase = testCases[currentIteration];",
+									"pm.variables.set(\"password\", testCase.data);",
+									"",
+									"// Test data for current iteration",
+									"pm.variables.set(\"expectedStatusCode\", testCase.expectedResult.expectedStatusCode);",
+									"pm.variables.set(\"expectedMessage\", testCase.expectedResult.expectedMessage);",
+									"",
+									"// Iteration ",
+									"if (currentIteration < maxIterations) {",
+									"    pm.variables.set(\"currentIteration\", currentIteration + 1);",
+									"    pm.execution.setNextRequest(pm.info.requestName)",
+									"} else {",
+									"    pm.variables.set(\"currentIteration\", 0);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{Email}}\",\n  \"password\": \"{{password}}\",\n  \"remember\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseUrl}}/auth/signin",
+							"host": [
+								"{{BaseUrl}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Tests check errors when user try to send request \\[/auth/signin\\] with:\n\n\\- Empty, invalid, incorrect email\n\n\\- Empty, invalid, incorrect password"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"pm.collectionVariables.set(\"generatePasswordMaxLength\", generatePasswordMaxLength.toString());",
+					"pm.collectionVariables.set(\"generatePasswordMinLength\", generatePasswordMinLength.toString());",
+					"pm.collectionVariables.set(\"generateRandomDateOfBirth\", generateRandomDateOfBirth.toString());",
+					"pm.collectionVariables.set(\"generateRandomCarId\", generateRandomCarId.toString());",
+					"pm.collectionVariables.set(\"generateRandomCarIdModel\", generateRandomCarIdModel.toString());",
+					"pm.collectionVariables.set(\"generateMileage\", generateMileage.toString());",
+					"pm.collectionVariables.set(\"getCurrentDate\", getCurrentDate.toString());",
+					"",
+					"// Create random password func with max symbols",
+					"function generatePasswordMaxLength() {",
+					"    const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';",
+					"    let randomString = '';",
+					"    for (let i = 0; i < 15; i++) {",
+					"        const randomIndex = Math.floor(Math.random() * characters.length);",
+					"        randomString += characters.charAt(randomIndex);",
+					"    }",
+					"    return randomString;",
+					"",
+					"}",
+					"",
+					"// Create random password func with min symbols",
+					"function generatePasswordMinLength() {",
+					"    const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';",
+					"    let randomString = '';",
+					"    do {",
+					"        randomString = '';",
+					"        for (let i = 0; i < 8; i++) {",
+					"            const randomIndex = Math.floor(Math.random() * characters.length);",
+					"            randomString += characters.charAt(randomIndex);",
+					"        }",
+					"    } while (!/\\d/.test(randomString) && !/\\[a-zA-Z]/.test(randomString));",
+					"",
+					"    return randomString;",
+					"}",
+					"",
+					"// Create random date of birth generator",
+					"function generateRandomDateOfBirth() {",
+					"    const startYear = 1970;",
+					"    const endYear = 2024;",
+					"    const year = Math.floor(Math.random() * (endYear - startYear + 1)) + startYear;",
+					"    const month = Math.floor(Math.random() * 12);",
+					"    const day = Math.floor(Math.random() * 28) + 1;",
+					"    const randomDate = new Date(year, month, day);",
+					"    return randomDate.toISOString();",
+					"}",
+					"",
+					"// Create random Brand generator",
+					"function generateRandomCarId() {",
+					"    return Math.floor(Math.random() * 5)+1;",
+					"}",
+					"",
+					"// Create random Model generator",
+					"function generateRandomCarIdModel(brand) {",
+					"    if (brand ===1) {return Math.floor(Math.random() * 5)+1;}",
+					"    else if (brand ===2) {return Math.floor(Math.random() * 5)+6;}",
+					"    else if (brand ===3) {return Math.floor(Math.random() * 5)+11;}",
+					"    else if (brand ===4) {return Math.floor(Math.random() * 3)+16;}",
+					"    else if (brand ===5) {return Math.floor(Math.random() * 5)+19;}",
+					"    else {return null;}",
+					"}",
+					"",
+					"// Create random generateMileage generator",
+					"function generateMileage() {",
+					"    return Math.floor(Math.random() * 1000000);",
+					"}",
+					"",
+					"// Create current date for reportedAt",
+					"function getCurrentDate() {",
+					"    const now = new Date();",
+					"    const year = now.getFullYear();",
+					"    const month = String(now.getMonth() + 1).padStart(2, '0');",
+					"    const day = String(now.getDate()).padStart(2, '0');",
+					"    return `${year}-${month}-${day}`;",
+					"}",
+					"",
+					"// const foldersToSkip = [\"Negative tests (requests)\", \"Negative tests (Field validation)\"];",
+					"// const currentFolder = pm.info.folderName;",
+					"",
+					"// if (foldersToSkip.includes(currentFolder)) {",
+					"//     pm.execution.setNextRequest(null);",
+					"// }"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "generatePasswordMaxLength",
+			"value": ""
+		},
+		{
+			"key": "generatePasswordMinLength",
+			"value": ""
+		},
+		{
+			"key": "generateRandomDateOfBirth",
+			"value": ""
+		},
+		{
+			"key": "generateRandomCarId",
+			"value": ""
+		},
+		{
+			"key": "generateRandomCarIdModel",
+			"value": ""
+		},
+		{
+			"key": "generateMileage",
+			"value": ""
+		},
+		{
+			"key": "getCurrentDate",
+			"value": ""
+		},
+		{
+			"key": "FirstName",
+			"value": ""
+		},
+		{
+			"key": "LastName",
+			"value": ""
+		},
+		{
+			"key": "Email",
+			"value": ""
+		},
+		{
+			"key": "Password",
+			"value": ""
+		},
+		{
+			"key": "UserId",
+			"value": ""
+		},
+		{
+			"key": "DateBirth",
+			"value": ""
+		},
+		{
+			"key": "Country",
+			"value": ""
+		},
+		{
+			"key": "CarId",
+			"value": ""
+		},
+		{
+			"key": "carBrandId",
+			"value": ""
+		},
+		{
+			"key": "carModelId",
+			"value": ""
+		},
+		{
+			"key": "carMileage",
+			"value": ""
+		},
+		{
+			"key": "ReportedAt",
+			"value": ""
+		},
+		{
+			"key": "Liters",
+			"value": ""
+		},
+		{
+			"key": "TotalCost",
+			"value": ""
+		}
+	]
+}
