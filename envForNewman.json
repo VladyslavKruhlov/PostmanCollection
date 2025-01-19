@@ -1,5 +1,15 @@
-[
-  {
-    "BaseUrl": ["https://qauto.forstudy.space/api", "https://qauto2.forstudy.space/api"]
-  }
-]
+{
+  "id": "unique-environment-id-2",
+  "name": "Environment Dev",
+  "values": [
+    {
+      "key": "BaseUrl",
+      "value": ["https://qauto.forstudy.space/api", "https://qauto2.forstudy.space/api"],
+      "enabled": true
+    }
+  ],
+  "timestamp": 0,
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2025-01-18T00:00:00.000Z",
+  "_postman_exported_using": "Postman/10.8.2"
+}
