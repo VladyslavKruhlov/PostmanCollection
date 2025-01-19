@@ -1,10 +1,10 @@
 {
-  "id": "unique-environment-id-2",
-  "name": "Environment Dev",
+  "id": "unique-environment-id-3",
+  "name": "Environments",
   "values": [
     {
       "key": "BaseUrl",
-      "value": ["https://qauto.forstudy.space/api", "https://qauto2.forstudy.space/api"],
+      "value": "",
       "enabled": true
     }
   ],
