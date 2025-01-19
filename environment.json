@@ -1,4 +1,4 @@
 [
-  { "BaseUrl": "https://qauto.forstudy.space/api" },
-  { "BaseUrl": "https://qauto2.forstudy.space/api" }
+  {"BaseUrl": "https://qauto2.forstudy.space/api"},
+  {"BaseUrl": "https://qauto.forstudy.space/api"}
 ]
